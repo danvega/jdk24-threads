@@ -2,15 +2,18 @@ package dev.danvega.threads.inventory;
 
 import org.springframework.stereotype.Service;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap; // Import ConcurrentHashMap
 
 /**
- * Service that manages product inventory with synchronized methods
- * to demonstrate virtual thread behavior in JDK 24.
+ * Service that manages product inventory with synchronized methods.
+ * Modified to use per-product ID locks.
  */
 @Service
 public class InventoryService {
+
     private final Map<String, Integer> inventory = new ConcurrentHashMap<>();
+    // Use a ConcurrentHashMap to store locks for each product ID
+    private final ConcurrentHashMap<String, Object> productLocks = new ConcurrentHashMap<>();
     private final DatabaseService dbService;
 
     public InventoryService(DatabaseService dbService) {
@@ -18,36 +21,39 @@ public class InventoryService {
     }
 
     /**
-     * Updates the inventory for a product. This method is synchronized to prevent
-     * concurrent modifications to the same product, and contains a blocking operation
-     * (database write).
-     * 
-     * In JDK 21, this would cause virtual thread pinning during the database operation.
-     * In JDK 24, the virtual thread can unmount from its carrier thread during the
-     * blocking operation, even while holding the monitor for this object.
+     * Updates the inventory for a product. This method uses synchronized blocks
+     * on a per-product basis to prevent concurrent modifications to the same product,
+     * while allowing concurrent updates to different products.
      *
      * @param productId the ID of the product to update
      * @param quantity the quantity change (positive for additions, negative for removals)
      * @return true if the update was successful, false if it would result in negative inventory
      */
-    public synchronized boolean updateInventory(String productId, int quantity) {
-        // Check current inventory
-        int currentStock = inventory.getOrDefault(productId, 0);
+    public boolean updateInventory(String productId, int quantity) {
+        // Get or create a lock object specific to this productId
+        // computeIfAbsent is thread-safe and ensures only one lock object is created per ID
+        Object productLock = productLocks.computeIfAbsent(productId, k -> new Object());
 
-        if (currentStock + quantity < 0) {
-            return false; // Can't have negative inventory
+        // Synchronize on the product-specific lock, NOT 'this'
+        synchronized (productLock) {
+            int currentStock = inventory.getOrDefault(productId, 0);
+
+            if (currentStock + quantity < 0) {
+                return false; // Can't have negative inventory
+            }
+
+            // This simulates a slow database write that blocks
+            dbService.persistInventoryChange(productId, quantity);
+
+            // Update in-memory inventory
+            inventory.put(productId, currentStock + quantity);
+            return true;
         }
-
-        // This simulates a slow database write that blocks
-        dbService.persistInventoryChange(productId, quantity);
-
-        // Update in-memory inventory
-        inventory.put(productId, currentStock + quantity);
-        return true;
     }
 
     /**
      * Gets the current inventory level for a product.
+     * (No change needed here as getOrDefault is generally thread-safe for reads)
      *
      * @param productId the ID of the product
      * @return the current inventory level

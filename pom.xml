@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>dev.danvega</groupId>
-	<artifactId>jdk24-threads</artifactId>
+	<artifactId>virtual-threads-demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>jdk24-threads</name>
-	<description>Demo project for Spring Boot</description>
+	<name>virtual-threads-demo</name>
+	<description>Virtual Threads with Synchronized Blocks Demo</description>
 	<url/>
 	<licenses>
 		<license/>

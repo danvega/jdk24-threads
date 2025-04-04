@@ -3,15 +3,14 @@ package dev.danvega.threads.inventory;
 import org.springframework.stereotype.Service;
 
 /**
- * Service that simulates database operations with artificial delays
- * to demonstrate the behavior of virtual threads with synchronized blocks.
+ * Service that simulates database operations with artificial delays.
  */
 @Service
 public class DatabaseService {
     
     /**
      * Simulates persisting an inventory change to a database.
-     * This method intentionally blocks to demonstrate virtual thread behavior.
+     * This method intentionally blocks to simulate a database operation.
      * 
      * @param productId the ID of the product being updated
      * @param quantity the quantity change (positive for additions, negative for removals)
@@ -19,7 +18,8 @@ public class DatabaseService {
     public void persistInventoryChange(String productId, int quantity) {
         try {
             // Simulate a slow database operation
-            Thread.sleep(200);  // 200ms per operation
+            // Only 10ms delay to make the benchmark run faster while still showing differences
+            Thread.sleep(100);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
