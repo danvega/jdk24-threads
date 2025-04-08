@@ -30,6 +30,7 @@ public class InventoryService {
      * @return true if the update was successful, false if it would result in negative inventory
      */
     public boolean updateInventory(String productId, int quantity) {
+
         // Get or create a lock object specific to this productId
         // computeIfAbsent is thread-safe and ensures only one lock object is created per ID
         Object productLock = productLocks.computeIfAbsent(productId, k -> new Object());
